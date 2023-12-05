@@ -366,10 +366,13 @@ def back_fins():
     return fins
 
 if __name__ == '__main__':
+    # TODO: angle out 15 degrees
+    # TODO: Add camfer and holes to end of band.
+    
     fn = 256
     band = tiara_band()
     band = sd.translate([(9*13+5)/2,0])(band)
-    final = flat2cylinder(band, 9*13+5, segments = 100)
+    final = flat2cylinder(band, 9*13+5, r=70, segments = 100)
     guide = wire_guide()
     # guide = sd.translate([101,0,85])(guide)
     guide = sd.translate([101,0,75])(guide)
@@ -377,6 +380,6 @@ if __name__ == '__main__':
     guide = sd.union()(*[sd.rotate([0,0,22.85+i*19.18])(guide) for i in range(-1,9)])
     final += guide
     final += back_fins()
-    final = sd.scale(.7)(final)
+    # final = sd.scale(.7)(final)
     final = sd.scad_render(final, file_header=f'$fn={fn};')
     print(final)
