@@ -316,8 +316,7 @@ def tiara_loop(r=5, w=3):
     final -= sd.mirror([1,0])(diag)
     return final
 
-def tiara_band():
-    shift = 13
+def tiara_band(shift=13):
     loop = tiara_loop()
     final = sd.union()(*[sd.translate([i*shift,0])(loop) for i in range(-4,5)])
     final += sd.square([9*shift+5, shift/2], center=True)
@@ -347,39 +346,57 @@ def wire_guide():
     guide = sd.cube([3.9,3,2],center=True)
     guide += sd.cube([2,3,4],center=True)
     guide = sd.hull()(guide)
-    guide -= sd.cube([5,.35,5], center=True)
+    guide -= sd.cube([5,.5,5], center=True)
     guide -= sd.cube([3,1.5,5], center=True)
     return guide
 
-def back_fins():
+def back_fins(r,thickness=3, d=17):
     h=17
-    fins = sd.cylinder(r=103, h=h, center=True)
-    fins -= sd.cylinder(r=100, h=h+1, center=True)
+    fins = sd.cylinder(r=r+thickness, h=h, center=True)
+    fins -= sd.cylinder(r=r, h=h+1, center=True)
     fins -= sd.rotate([0,0,-45])(sd.translate([500,-500,0])(sd.cube(1000,center=True)))
-    end = sd.cylinder(d=17, h=3)
+    end = sd.cylinder(d=d, h=thickness)
     end &= (sd.translate([500,0,0])(sd.cube(1000,center=True)))
-    end = sd.rotate([90,0,0])(end)
-    end = sd.translate([0,-100,0])(end)
+    end2 = sd.cube([d/2, d*(1-np.sqrt(2)/2),thickness])
+    end2 += sd.cube([d*(1-np.sqrt(2)/2), d/2, thickness])
+    end2 = sd.hull()(end2)
+    end += end2
+    end = sd.rotate([-90,0,0])(end)
+    end = sd.translate([0,-r-thickness,0])(end)
     end = sd.rotate([0,0,-45])(end)
     fins += end
     fins += sd.mirror([1,0,0])(end)
     return fins
+
+def back_hole(r,r_hole,thickness=5):
+    h=17
+    end = sd.cylinder(d=r_hole, h=thickness+1, _fn=8, center=True)
+    # end &= (sd.translate([500,0,0])(sd.cube(1000,center=True)))
+    end = sd.rotate([0,0,22.5])(end)
+    end = sd.rotate([90,0,0])(end)
+    end = sd.translate([0,-r,0])(end)
+    end = sd.rotate([0,0,-45])(end)
+    end += sd.mirror([1,0,0])(end)
+    return end
 
 if __name__ == '__main__':
     # TODO: angle out 15 degrees
     # TODO: Add camfer and holes to end of band.
     
     fn = 256
-    band = tiara_band()
-    band = sd.translate([(9*13+5)/2,0])(band)
-    final = flat2cylinder(band, 9*13+5, r=70, segments = 100)
+    r_head = 70
+    loop_shift = 13
+    band = tiara_band(shift=loop_shift)
+    band = sd.translate([(9*loop_shift+5)/2,0])(band)
+    final = flat2cylinder(band, 9*loop_shift+5, r=r_head, segments = 100)
     guide = wire_guide()
     # guide = sd.translate([101,0,85])(guide)
-    guide = sd.translate([101,0,75])(guide)
+    guide = sd.translate([r_head+1,0,75*r_head/100])(guide)
     # guide = sd.rotate([0,0,22.85])(guide)
     guide = sd.union()(*[sd.rotate([0,0,22.85+i*19.18])(guide) for i in range(-1,9)])
     final += guide
-    final += back_fins()
+    final += back_fins(r=r_head)
+    final -= back_hole(r=r_head, r_hole=5)
     # final = sd.scale(.7)(final)
     final = sd.scad_render(final, file_header=f'$fn={fn};')
     print(final)
